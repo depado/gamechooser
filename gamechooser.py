@@ -10,10 +10,11 @@ from gi.repository import Gtk
 
 class Game(object):
 
-    def __init__(self, path, label):
+    def __init__(self, path, confpath, conf, label):
         self.path = path
         self.label = label
-        self.button = None
+        self.confpath = confpath
+        self.conf = conf
 
 
 class MyWindow(Gtk.Window):
@@ -26,37 +27,45 @@ class MyWindow(Gtk.Window):
 
 
 # Il y aura bien évidemment plus de deux jeux sinon je ne m'embêterai pas.
-amnesia = Game(path="/usr/games/Amnesia/Launcher.bin64", label="Amnesia - The Dark Descent")
-aquaria = Game(path="/usr/games/Aquaria/aquaria", label="Aquaria")
-minecraft = Game(path="minecraft", label="Minecraft")
-GAMES = [amnesia, aquaria, minecraft]
+amnesia = Game(path="/usr/games/Amnesia/Amnesia.bin64", confpath="/usr/games/Amnesia/Launcher.bin64", conf=True, label="Amnesia")
+aquaria = Game(path="/usr/games/Aquaria/aquaria", confpath=None, conf=False, label="Aquaria")
+minecraft = Game(path="minecraft", confpath=None, conf=False, label="Minecraft")
+botanicula = Game(path="/usr/games/Botanicula/botanicula", confpath=None, conf=False, label="Botanicula")
+frogatto = Game(path="/usr/bin/frogatto", confpath=None, conf=False, label="Frogatto")
+GAMES = [amnesia, aquaria, minecraft, botanicula, frogatto]
 
 win = MyWindow()
 win.connect("delete-event", Gtk.main_quit)
 win.set_title("Game Chooser")
-win.set_border_width(5)
-win.table = Gtk.Table(len(GAMES), 2, True)
+win.set_border_width(10)
+win.set_icon_from_file("/usr/share/icons/Faenza/devices/scalable/joystick.svg")
+win.set_resizable(False)
 
-# Le premier boutton est important car il ne nécessite pas de
-# attach_next_to() pour être ajouté à la grille
-first_game = True
+win.table = Gtk.Table(len(GAMES), 3, True)
+win.table.set_row_spacings(5)
+win.table.set_col_spacings(25)
+
 x = 0
 for game in GAMES:
-    button = Gtk.Button(label="Play")
-    button.connect("clicked", win.launch, game.path) # Rajout d'un argument dans l'appel
+    image = Gtk.Image()
+    image.set_from_stock(Gtk.STOCK_MEDIA_PLAY, Gtk.IconSize.BUTTON)
+    play_button = Gtk.Button()
+    play_button.set_image(image)
+    play_button.connect("clicked", win.launch, game.path) # Rajout d'un argument dans l'appel
+    win.table.attach(play_button, 1, 2, x, x+1)
+    if game.conf:
+        image = Gtk.Image()
+        image.set_from_stock(Gtk.STOCK_EXECUTE, Gtk.IconSize.BUTTON)
+        conf_button = Gtk.Button()
+        conf_button.set_image(image)
+        conf_button.connect("clicked", win.launch, game.confpath)
+        win.table.attach(conf_button, 2, 3, x, x+1)
 
-    if first_game:
-        win.table.attach(button, 0, 1, 0, 1)
-        first_game = False
-
-    else:
-        win.table.attach(button, 0, 1, x, x+1)
+    label = Gtk.Label(game.label)
+    label.set_justify(Gtk.Justification.LEFT)
+    win.table.attach(label, 0, 1, x, x+1)
     x += 1
 
-label = Gtk.Label("Amnesia is Fun")
-win.table.attach(label, 1, 2, 0, 1)
-win.table.set_row_spacings(5)
-win.table.set_column_spacings(10)
 win.add(win.table)
 win.show_all()
 Gtk.main()
